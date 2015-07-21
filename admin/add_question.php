@@ -1,6 +1,7 @@
 <?php include('includes/header.php');?>
 <?php
 
+
 $objSql1 = new SqlClass();
 $getStandardSql="SELECT id,standard FROM bm_standard_master";
 $standards=$objSql1->executeSql($getStandardSql);
@@ -12,6 +13,13 @@ $subjects=$objSql2->executeSql($getSubjectSql);
 $objSql3 = new SqlClass();
 $getLevelSql="SELECT id,level FROM bm_level_master";
 $levels=$objSql3->executeSql($getLevelSql);
+
+if(isset($_POST['submit']))
+{
+
+
+}
+
 ?>
 
 <!-- page heading start-->
@@ -58,6 +66,7 @@ $levels=$objSql3->executeSql($getLevelSql);
                                         <select class="form-control" id="subject" name="subject" required="required">
                                             <option disabled selected>Select Subject</option>
                                             <?php while($subject=$objSql2->fetchRow($subjects)): ?>
+                                                <?php var_dump($subject) ?>
                                                 <option value="<?php echo $subject['id']; ?>"><?php echo $subject['subject']; ?></option>
                                             <?php endwhile; ?>
 
@@ -132,13 +141,19 @@ $levels=$objSql3->executeSql($getLevelSql);
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="col-sm-3 control-label" for="marks">Marks</label>
+                                    <label class="col-sm-3 control-label" for="option_a">Option A</label>
                                     <div class="col-sm-9">
-                                        <input class="form-control" name="marks" id="marks" placeholder="Type Marks in Number">
+                                        <input class="form-control" name="option_a" id="option_a" placeholder="Type Option A">
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-lg-6">
+
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label" for="option_a">Option C</label>
+                                    <div class="col-sm-9">
+                                        <input class="form-control" name="option_c" id="option_c" placeholder="Type Option C">
+                                    </div>
+                                </div>
+
                                 <div class="form-group">
                                     <label class="col-sm-3 control-label" for="obj_answer">Answer</label>
                                     <div class="col-sm-9">
@@ -149,6 +164,31 @@ $levels=$objSql3->executeSql($getLevelSql);
                                             <option>Option C</option>
                                             <option>Option D</option>
                                         </select>
+                                    </div>
+                                </div>
+
+
+
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label" for="marks">Marks</label>
+                                    <div class="col-sm-9">
+                                        <input class="form-control" name="marks" id="marks" placeholder="Type Marks in Number">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label" for="option_b">Option B</label>
+                                    <div class="col-sm-9">
+                                        <input class="form-control" name="option_b" id="option_b" placeholder="Type Option B">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label" for="option_d">Option D</label>
+                                    <div class="col-sm-9">
+                                        <input class="form-control" name="option_d" id="option_d" placeholder="Type Option D">
                                     </div>
                                 </div>
                             </div>
@@ -337,6 +377,7 @@ $levels=$objSql3->executeSql($getLevelSql);
                     </header>
                     <div class="panel-body">
                         <button class="btn btn-primary" type="submit" name="save_question">Save Question</button>
+                        <button class="btn btn-info" type="reset">Reset</button>
                     </div>
                 </section>
             </div>

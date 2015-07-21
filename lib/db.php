@@ -255,7 +255,8 @@
             return $string;
         }
         //function to sanitize inputs and get valuse
-        //Ads by Ankit
+
+        //@Ankit
         function sanitize($input) {
             $output='';
             if (is_array($input)) {
@@ -263,7 +264,8 @@
                     $output[$var] = $this->sanitize($val);
                 }
             }
-            else {
+            else
+            {
                 if (get_magic_quotes_gpc()) {
                     $input = stripslashes($input);
                 }
