@@ -251,7 +251,6 @@
         {   //cleaning string to prevent XSS
             $string=trim($string);
             $string=strip_tags($string);
-            $string=htmlentities($string,ENT_QUOTES|ENT_HTML5,'UTF-8');
             return $string;
         }
         //function to sanitize inputs and get valuse

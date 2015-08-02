@@ -134,6 +134,7 @@ admin_login_check('0', 'admin');
             <li class="menu-list"><a href=""><i class="fa fa-envelope"></i> <span>Question Management</span></a>
                 <ul class="sub-menu-list">
                     <li><a href="add_question.php"> Add Questions</a></li>
+                    <li><a href="bulk_question_upload.php"> Bulk Question Upload</a></li>
                     <li><a href="manage_questions.php"> Manage Questions</a></li>
                 </ul>
             </li>

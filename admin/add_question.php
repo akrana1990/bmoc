@@ -1,6 +1,17 @@
 <?php include('includes/header.php');?>
 <?php
-
+define("UPLOAD_DIR", "uploads/");
+function check_upload_dir()
+{
+    if(!is_dir('uploads'))
+    {
+        die('Upload folder not exists');
+    }
+    elseif(!is_writable('uploads'))
+    {
+        die('Not enough permission on uploads folder');
+    }
+}
 
 $objSql1 = new SqlClass();
 $getStandardSql="SELECT id,standard FROM bm_standard_master";
@@ -14,10 +25,145 @@ $objSql3 = new SqlClass();
 $getLevelSql="SELECT id,level FROM bm_level_master";
 $levels=$objSql3->executeSql($getLevelSql);
 
-if(isset($_POST['submit']))
+if(isset($_POST['save_question']))
 {
+    /*echo '<pre>';
+    print_r($_POST);
+    echo '</pre>';*/
+    $objSql4 = new SqlClass();
+    $_POST=$objSql4->sanitize($_POST);
+    $db_columns=array(
+        'standard',
+        'subject',
+        'author',
+        'question_level',
+        'status',
+        'marks',
+        'question_type',
+        'question',
+        'answer'
+    );
+    $column_sring=implode(',',$db_columns);
+
+    $column_vals="'".$_POST['standard']."'";
+    $column_vals.=','."'".$_POST['subject']."'";
+    $column_vals.=','."'".$_POST['author']."'";
+    $column_vals.=','."'".$_POST['level']."'";
+    $column_vals.=','."'".$_POST['status']."'";
+    $column_vals.=','."'".$_POST['marks']."'";
+    $column_vals.=','."'".$_POST['question_type']."'";
+
+    if(isset($_POST['question_type'])&&$_POST['question_type']=='objective')
+    {
+        $obj_question_array=array(
+            'question'=>$_POST['obj_question'],
+            'option_a'=>$_POST['option_a'],
+            'option_b'=>$_POST['option_b'],
+            'option_c'=>$_POST['option_c'],
+            'option_d'=>$_POST['option_d']
+        );
+        $obj_question=json_encode($obj_question_array);
+        //echo $obj_question;
+        $column_vals.=','."'".$obj_question."'";
+        $column_vals.=','."'".$_POST['obj_answer']."'";
+    }
+
+    if(isset($_POST['question_type'])&&$_POST['question_type']=='single_answer')
+    {
+        $column_vals.=','."'".$_POST['single_question']."'";
+        $column_vals.=','."'".$_POST['single_answer']."'";
+    }
+
+    /*if(isset($_POST['question_type'])&&$_POST['question_type']=='audio')
+    {
+        $column_vals.=','."'".'Audio Question'."'";
+        $column_vals.=','."'".$_POST['audio_answer']."'";
+    }
+    if(isset($_POST['question_type'])&&$_POST['question_type']=='video')
+    {
+        $column_vals.=','."'".'Video Question'."'";
+        $column_vals.=','."'".$_POST['video_answer']."'";
+    }*/
+
+    if(isset($_POST['question_type'])&&$_POST['question_type']=='static_image')
+    {
+        $file_type='';
+        check_upload_dir();
+        //if they DID upload a file...
+        if($_FILES['image_question']['name'])
+        {
+
+            //if no errors...
+            if(!$_FILES['image_question']['error'])
+            {
+                $valid_file=true;
+                //now is the time to modify the future file name and validate the file
 
 
+                /*$imageinfo = getimagesize($_FILES["image_question"]["tmp_name"]);
+                echo '<pre>';
+                print_r($imageinfo);
+                echo '</pre>';*/
+
+                $new_file_name = 'hello.jpg'; //rename file
+                if($_FILES['image_question']['size'] > (1024000)) //can't be larger than 1 MB
+                {
+                    $valid_file = false;
+                    $message = 'Oops!  Your file\'s size is to large.';
+                    //echo $message;
+                }
+                else
+                {       //check ext
+                    list($width, $height, $file_type) = getimagesize($_FILES["image_question"]["tmp_name"]) or die("<b>Invalid or currupt file input. Try again with JPG,PNG,GIF,JPEG file</b>");
+                    if($file_type!=1&&$file_type!=2&&$file_type!=3)
+                    {      //check file ext
+                        $valid_file = false;
+                        $message= "<b>Invalid image file type!</b><br>Only jpg, png, gif are allowed";
+                    }
+                }
+
+                //if the file has passed the test
+                if($valid_file)
+                {
+                    //set actual file ext
+                    if($file_type==1) {$ext=".gif";} else if($file_type==2) {$ext=".jpeg";} else if($file_type==3){$ext=".png";}
+                    //generate a new random unique name
+                    $new_file_name = hash('sha1', uniqid(mt_rand(), true)).$ext;
+                    //move it to where we want it to be
+                    if(move_uploaded_file($_FILES['image_question']['tmp_name'], UPLOAD_DIR.'image/'.$new_file_name))
+                    {
+                        $message = 'Congratulations!  Your file was accepted.';
+                    }
+                    else
+                    {
+                        $message = 'OOPS!  Your file was not accepted.';
+                    }
+
+                    echo $message;
+                }
+            }
+            //if there is an error...
+            else
+            {
+                //set that to be the returned message
+                $message = 'Ooops!  Your upload triggered the following error:  '.$_FILES['image_question']['error'];
+                echo $message;
+            }
+        }
+
+        $column_vals.=','."'".$new_file_name."'";
+        $column_vals.=','."'".$_POST['image_answer']."'";
+    }
+
+    $insertSql="INSERT INTO bm_questions($column_sring) VALUES ($column_vals)";
+    //echo $insertSql.'<br>';
+    //$insertQuery=$objSql3->executeSql($insertSql);
+    $insertQuery=mysql_query($insertSql) or die(mysql_error());
+
+    if($insertQuery)
+    {
+        header('location:add_question.php?success');
+    }
 }
 
 ?>
@@ -37,9 +183,12 @@ if(isset($_POST['submit']))
 <!--body wrapper start-->
 <section class="wrapper">
     <!-- page start-->
-    <form class="form-horizontal" action="" role="form" method="post">
+    <form class="form-horizontal" action="" role="form" method="post" enctype="multipart/form-data">
         <div class="row">
             <div class="col-lg-12">
+                <?php if(isset($_GET['success'])): ?>
+                    <div class="alert alert-success">Question Inserted Successfully.</div>
+                <?php endif; ?>
                 <section class="panel">
                     <header class="panel-heading">
                         New Question Addition Form
@@ -77,6 +226,12 @@ if(isset($_POST['submit']))
                                     <label class="col-sm-3 control-label" for="author">Author</label>
                                     <div class="col-sm-9">
                                         <input class="form-control" name="author" id="author" required="required" placeholder="Type Author Name">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label" for="marks">Marks</label>
+                                    <div class="col-sm-9">
+                                        <input class="form-control" name="marks" id="marks" placeholder="Type Marks in Number">
                                     </div>
                                 </div>
                             </div>
@@ -134,9 +289,9 @@ if(isset($_POST['submit']))
                         <div class="row">
                             <div class="col-lg-6">
                                 <div class="form-group">
-                                    <label class="col-sm-3 control-label" for="question">Question</label>
+                                    <label class="col-sm-3 control-label" for="obj_question">Question</label>
                                     <div class="col-sm-9">
-                                        <input class="form-control" name="question" id="question" placeholder="Type Question">
+                                        <input class="form-control" name="obj_question" id="obj_question" placeholder="Type Question">
                                     </div>
                                 </div>
 
@@ -171,12 +326,6 @@ if(isset($_POST['submit']))
 
                             </div>
                             <div class="col-lg-6">
-                                <div class="form-group">
-                                    <label class="col-sm-3 control-label" for="marks">Marks</label>
-                                    <div class="col-sm-9">
-                                        <input class="form-control" name="marks" id="marks" placeholder="Type Marks in Number">
-                                    </div>
-                                </div>
 
                                 <div class="form-group">
                                     <label class="col-sm-3 control-label" for="option_b">Option B</label>
@@ -208,18 +357,12 @@ if(isset($_POST['submit']))
                         <div class="row">
                             <div class="col-lg-6">
                                 <div class="form-group">
-                                    <label class="col-sm-3 control-label" for="question">Question</label>
+                                    <label class="col-sm-3 control-label" for="single_question">Question</label>
                                     <div class="col-sm-9">
-                                        <input class="form-control" name="question" id="question" placeholder="Type Question">
+                                        <input class="form-control" name="single_question" id="single_question" placeholder="Type Question">
                                     </div>
                                 </div>
 
-                                <div class="form-group">
-                                    <label class="col-sm-3 control-label" for="marks">Marks</label>
-                                    <div class="col-sm-9">
-                                        <input class="form-control" name="marks" id="marks" placeholder="Type Marks in Number">
-                                    </div>
-                                </div>
                             </div>
                             <div class="col-lg-6">
                                 <div class="form-group">
@@ -245,18 +388,12 @@ if(isset($_POST['submit']))
                         <aside class="row">
                             <div class="col-lg-6">
                                 <div class="form-group">
-                                    <label class="col-sm-3 control-label" for="question">Upload Audio</label>
+                                    <label class="col-sm-3 control-label" for="audio_question">Upload Audio</label>
                                     <div class="col-sm-9">
-                                        <input type="file" name="question" id="question" placeholder="Type Question">
+                                        <input type="file" name="audio_question" id="audio_question" placeholder="Type Question">
                                     </div>
                                 </div>
 
-                                <div class="form-group">
-                                    <label class="col-sm-3 control-label" for="marks">Marks</label>
-                                    <div class="col-sm-9">
-                                        <input class="form-control" name="marks" id="marks" placeholder="Type Marks in Number">
-                                    </div>
-                                </div>
                             </div>
                             <div class="col-lg-6">
                                 <div class="form-group">
@@ -289,12 +426,6 @@ if(isset($_POST['submit']))
                                     </div>
                                 </div>
 
-                                <div class="form-group">
-                                    <label class="col-sm-3 control-label" for="marks">Marks</label>
-                                    <div class="col-sm-9">
-                                        <input class="form-control" name="marks" id="marks" placeholder="Type Marks in Number">
-                                    </div>
-                                </div>
                             </div>
                             <div class="col-lg-6">
                                 <div class="form-group">
@@ -326,12 +457,6 @@ if(isset($_POST['submit']))
                                     </div>
                                 </div>
 
-                                <div class="form-group">
-                                    <label class="col-sm-3 control-label" for="marks">Marks</label>
-                                    <div class="col-sm-9">
-                                        <input class="form-control" name="marks" id="marks" placeholder="Type Marks in Number">
-                                    </div>
-                                </div>
                             </div>
                             <div class="col-lg-6">
                                 <div class="form-group">
